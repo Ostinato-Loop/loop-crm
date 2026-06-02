@@ -1,0 +1,24 @@
+name = "loop-crm"
+main = "src/index.ts"
+compatibility_date = "2025-01-01"
+compatibility_flags = []
+
+[vars]
+ENVIRONMENT = "production"
+
+# Secrets — set via: wrangler secret put <NAME>
+# Required:
+#   SUPABASE_URL
+#   SUPABASE_SERVICE_ROLE_KEY
+#   RALD_JWT_SECRET          — shared RALD ecosystem JWT secret (same as rald-auth-core)
+
+[[routes]]
+pattern = "crm.rald.cloud/*"
+zone_name = "rald.cloud"
+
+[build]
+command = ""
+
+[observability]
+enabled = true
+head_sampling_rate = 1
