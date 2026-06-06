@@ -6,6 +6,7 @@ import { Hono } from "hono";
 import type { Bindings, Variables } from "../index";
 import { authMiddleware, workspaceMiddleware } from "../lib/middleware";
 import { generateId, nowIso } from "../lib/auth";
+import type { JwtPayload } from "../lib/auth";
 
 const customers = new Hono<{ Bindings: Bindings; Variables: Variables }>();
 customers.use("*", authMiddleware, workspaceMiddleware);
@@ -13,14 +14,14 @@ customers.use("*", authMiddleware, workspaceMiddleware);
 // ── List / Search ─────────────────────────────────────────────────────────────
 customers.get("/", async (c) => {
   const db = c.get("db");
-  const workspaceId = c.get("workspace_id")!;
+  const workspaceId = c.get("workspace_id") as string;
 
   const q       = c.req.query("q") || "";
   const status  = c.req.query("status");
   const source  = c.req.query("source");
   const tag     = c.req.query("tag");
-  const limit   = Math.min(parseInt(c.req.query("limit") || "50"), 200);
-  const offset  = parseInt(c.req.query("offset") || "0");
+  const limit   = Math.min(Number.parseInt(c.req.query("limit") || "50"), 200);
+  const offset  = Number.parseInt(c.req.query("offset") || "0");
 
   let query = db.from("crm_customers")
     .select("*", { count: "exact" })
@@ -44,7 +45,7 @@ customers.get("/", async (c) => {
 // ── Get single ────────────────────────────────────────────────────────────────
 customers.get("/:id", async (c) => {
   const db = c.get("db");
-  const workspaceId = c.get("workspace_id")!;
+  const workspaceId = c.get("workspace_id") as string;
   const id = c.req.param("id");
 
   const { data: customer } = await db.from("crm_customers")
@@ -60,8 +61,8 @@ customers.get("/:id", async (c) => {
 // ── Create ────────────────────────────────────────────────────────────────────
 customers.post("/", async (c) => {
   const db = c.get("db");
-  const workspaceId = c.get("workspace_id")!;
-  const user = c.get("user")!;
+  const workspaceId = c.get("workspace_id") as string;
+  const user = c.get("user") as JwtPayload;
   const body = await c.req.json().catch(() => null) as Record<string, unknown> | null;
   if (!body?.name) return c.json({ error: "name is required" }, 400);
 
@@ -145,8 +146,8 @@ customers.post("/", async (c) => {
 // ── Update ────────────────────────────────────────────────────────────────────
 customers.patch("/:id", async (c) => {
   const db = c.get("db");
-  const workspaceId = c.get("workspace_id")!;
-  const user = c.get("user")!;
+  const workspaceId = c.get("workspace_id") as string;
+  const user = c.get("user") as JwtPayload;
   const id = c.req.param("id");
 
   if (c.get("workspace_role") === "viewer") return c.json({ error: "Viewers cannot update customers" }, 403);
@@ -182,8 +183,8 @@ customers.patch("/:id", async (c) => {
 // ── Add/Remove Tag ────────────────────────────────────────────────────────────
 customers.post("/:id/tags", async (c) => {
   const db = c.get("db");
-  const workspaceId = c.get("workspace_id")!;
-  const user = c.get("user")!;
+  const workspaceId = c.get("workspace_id") as string;
+  const user = c.get("user") as JwtPayload;
   const id = c.req.param("id");
   const body = await c.req.json().catch(() => null) as { tag?: string } | null;
   if (!body?.tag) return c.json({ error: "tag required" }, 400);
@@ -206,8 +207,8 @@ customers.post("/:id/tags", async (c) => {
 
 customers.delete("/:id/tags/:tag", async (c) => {
   const db = c.get("db");
-  const workspaceId = c.get("workspace_id")!;
-  const user = c.get("user")!;
+  const workspaceId = c.get("workspace_id") as string;
+  const user = c.get("user") as JwtPayload;
   const { id, tag } = c.req.param();
 
   const { data: cust } = await db.from("crm_customers").select("tags").eq("id", id).eq("workspace_id", workspaceId).single();
@@ -227,7 +228,7 @@ customers.delete("/:id/tags/:tag", async (c) => {
 // ── Notes ─────────────────────────────────────────────────────────────────────
 customers.get("/:id/notes", async (c) => {
   const db = c.get("db");
-  const workspaceId = c.get("workspace_id")!;
+  const workspaceId = c.get("workspace_id") as string;
   const id = c.req.param("id");
   const { data: notes } = await db.from("crm_customer_notes")
     .select("*").eq("customer_id", id).eq("workspace_id", workspaceId).is("deleted_at", null)
@@ -237,8 +238,8 @@ customers.get("/:id/notes", async (c) => {
 
 customers.post("/:id/notes", async (c) => {
   const db = c.get("db");
-  const workspaceId = c.get("workspace_id")!;
-  const user = c.get("user")!;
+  const workspaceId = c.get("workspace_id") as string;
+  const user = c.get("user") as JwtPayload;
   const id = c.req.param("id");
   const body = await c.req.json().catch(() => null) as { content?: string; is_pinned?: boolean } | null;
   if (!body?.content) return c.json({ error: "content required" }, 400);
@@ -264,8 +265,8 @@ customers.post("/:id/notes", async (c) => {
 // ── Soft Delete ───────────────────────────────────────────────────────────────
 customers.delete("/:id", async (c) => {
   const db = c.get("db");
-  const workspaceId = c.get("workspace_id")!;
-  const user = c.get("user")!;
+  const workspaceId = c.get("workspace_id") as string;
+  const user = c.get("user") as JwtPayload;
   const id = c.req.param("id");
 
   if (!["owner", "admin"].includes(c.get("workspace_role") || "")) {
