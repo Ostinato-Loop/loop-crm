@@ -5,6 +5,7 @@ import { Hono } from "hono";
 import type { Bindings, Variables } from "../index";
 import { authMiddleware, workspaceMiddleware } from "../lib/middleware";
 import { generateId, nowIso } from "../lib/auth";
+import type { JwtPayload } from "../lib/auth";
 
 const timeline = new Hono<{ Bindings: Bindings; Variables: Variables }>();
 timeline.use("*", authMiddleware, workspaceMiddleware);
@@ -25,10 +26,10 @@ const VALID_EVENT_TYPES = [
 // Get timeline for a customer
 timeline.get("/customer/:customer_id", async (c) => {
   const db = c.get("db");
-  const workspaceId = c.get("workspace_id")!;
+  const workspaceId = c.get("workspace_id") as string;
   const customerId = c.req.param("customer_id");
-  const limit = Math.min(parseInt(c.req.query("limit") || "50"), 200);
-  const offset = parseInt(c.req.query("offset") || "0");
+  const limit = Math.min(Number.parseInt(c.req.query("limit") || "50"), 200);
+  const offset = Number.parseInt(c.req.query("offset") || "0");
   const eventType = c.req.query("event_type");
 
   // Verify customer in workspace
@@ -51,8 +52,8 @@ timeline.get("/customer/:customer_id", async (c) => {
 // Append a custom event to timeline (for external systems)
 timeline.post("/customer/:customer_id", async (c) => {
   const db = c.get("db");
-  const workspaceId = c.get("workspace_id")!;
-  const user = c.get("user")!;
+  const workspaceId = c.get("workspace_id") as string;
+  const user = c.get("user") as JwtPayload;
   const customerId = c.req.param("customer_id");
   const body = await c.req.json().catch(() => null) as {
     event_type?: string; event_data?: Record<string, unknown>; channel?: string;
@@ -85,8 +86,8 @@ timeline.post("/customer/:customer_id", async (c) => {
 // Workspace-level activity feed (recent events across all customers)
 timeline.get("/workspace", async (c) => {
   const db = c.get("db");
-  const workspaceId = c.get("workspace_id")!;
-  const limit = Math.min(parseInt(c.req.query("limit") || "20"), 100);
+  const workspaceId = c.get("workspace_id") as string;
+  const limit = Math.min(Number.parseInt(c.req.query("limit") || "20"), 100);
 
   const { data: events } = await db.from("crm_customer_activity")
     .select("*, crm_customers(id, name, email, avatar_url)")
