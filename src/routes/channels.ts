@@ -5,6 +5,7 @@ import { Hono } from "hono";
 import type { Bindings, Variables } from "../index";
 import { authMiddleware, workspaceMiddleware } from "../lib/middleware";
 import { generateId, nowIso } from "../lib/auth";
+import type { JwtPayload } from "../lib/auth";
 
 const channels = new Hono<{ Bindings: Bindings; Variables: Variables }>();
 channels.use("*", authMiddleware, workspaceMiddleware);
@@ -14,8 +15,8 @@ const VALID_CHANNELS = ["email", "phone", "whatsapp", "instagram", "facebook", "
 // Link a channel to a customer
 channels.post("/", async (c) => {
   const db = c.get("db");
-  const workspaceId = c.get("workspace_id")!;
-  const user = c.get("user")!;
+  const workspaceId = c.get("workspace_id") as string;
+  const user = c.get("user") as JwtPayload;
   const body = await c.req.json().catch(() => null) as {
     customer_id?: string; channel_type?: string; channel_id?: string; is_primary?: boolean;
   } | null;
@@ -62,7 +63,7 @@ channels.post("/", async (c) => {
 // List channels for a customer
 channels.get("/customer/:customer_id", async (c) => {
   const db = c.get("db");
-  const workspaceId = c.get("workspace_id")!;
+  const workspaceId = c.get("workspace_id") as string;
   const customerId = c.req.param("customer_id");
 
   const { data: channels } = await db.from("crm_customer_channels")
@@ -75,7 +76,7 @@ channels.get("/customer/:customer_id", async (c) => {
 // Mark channel as verified
 channels.patch("/:id/verify", async (c) => {
   const db = c.get("db");
-  const workspaceId = c.get("workspace_id")!;
+  const workspaceId = c.get("workspace_id") as string;
   const id = c.req.param("id");
 
   if (!["owner", "admin"].includes(c.get("workspace_role") || "")) {
@@ -94,7 +95,7 @@ channels.patch("/:id/verify", async (c) => {
 // Remove channel
 channels.delete("/:id", async (c) => {
   const db = c.get("db");
-  const workspaceId = c.get("workspace_id")!;
+  const workspaceId = c.get("workspace_id") as string;
   const id = c.req.param("id");
 
   if (!["owner", "admin"].includes(c.get("workspace_role") || "")) {
@@ -110,7 +111,7 @@ channels.delete("/:id", async (c) => {
 // Lookup customer by channel (identity resolution)
 channels.get("/resolve", async (c) => {
   const db = c.get("db");
-  const workspaceId = c.get("workspace_id")!;
+  const workspaceId = c.get("workspace_id") as string;
   const channelType = c.req.query("channel_type");
   const channelId = c.req.query("channel_id");
 
