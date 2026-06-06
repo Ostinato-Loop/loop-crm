@@ -5,6 +5,7 @@ import { Hono } from "hono";
 import type { Bindings, Variables } from "../index";
 import { authMiddleware, workspaceMiddleware } from "../lib/middleware";
 import { generateId, nowIso } from "../lib/auth";
+import type { JwtPayload } from "../lib/auth";
 
 const segments = new Hono<{ Bindings: Bindings; Variables: Variables }>();
 segments.use("*", authMiddleware, workspaceMiddleware);
@@ -12,7 +13,7 @@ segments.use("*", authMiddleware, workspaceMiddleware);
 // List segments
 segments.get("/", async (c) => {
   const db = c.get("db");
-  const workspaceId = c.get("workspace_id")!;
+  const workspaceId = c.get("workspace_id") as string;
 
   const { data } = await db.from("crm_customer_segments")
     .select("*").eq("workspace_id", workspaceId).is("deleted_at", null)
@@ -24,8 +25,8 @@ segments.get("/", async (c) => {
 // Create segment
 segments.post("/", async (c) => {
   const db = c.get("db");
-  const workspaceId = c.get("workspace_id")!;
-  const user = c.get("user")!;
+  const workspaceId = c.get("workspace_id") as string;
+  const user = c.get("user") as JwtPayload;
   const body = await c.req.json().catch(() => null) as {
     name?: string; description?: string; is_smart?: boolean; filter_criteria?: Record<string, unknown>;
   } | null;
@@ -60,10 +61,10 @@ segments.post("/", async (c) => {
 // Get segment members (resolves smart filters in real-time)
 segments.get("/:id/members", async (c) => {
   const db = c.get("db");
-  const workspaceId = c.get("workspace_id")!;
+  const workspaceId = c.get("workspace_id") as string;
   const id = c.req.param("id");
-  const limit = Math.min(parseInt(c.req.query("limit") || "50"), 200);
-  const offset = parseInt(c.req.query("offset") || "0");
+  const limit = Math.min(Number.parseInt(c.req.query("limit") || "50"), 200);
+  const offset = Number.parseInt(c.req.query("offset") || "0");
 
   const { data: segment } = await db.from("crm_customer_segments")
     .select("*").eq("id", id).eq("workspace_id", workspaceId).is("deleted_at", null).single();
@@ -109,8 +110,8 @@ segments.get("/:id/members", async (c) => {
 // Add member to manual segment
 segments.post("/:id/members", async (c) => {
   const db = c.get("db");
-  const workspaceId = c.get("workspace_id")!;
-  const user = c.get("user")!;
+  const workspaceId = c.get("workspace_id") as string;
+  const user = c.get("user") as JwtPayload;
   const id = c.req.param("id");
   const body = await c.req.json().catch(() => null) as { customer_id?: string } | null;
   if (!body?.customer_id) return c.json({ error: "customer_id required" }, 400);
@@ -138,8 +139,8 @@ segments.post("/:id/members", async (c) => {
 // Delete segment
 segments.delete("/:id", async (c) => {
   const db = c.get("db");
-  const workspaceId = c.get("workspace_id")!;
-  const user = c.get("user")!;
+  const workspaceId = c.get("workspace_id") as string;
+  const user = c.get("user") as JwtPayload;
   const id = c.req.param("id");
 
   if (!["owner", "admin"].includes(c.get("workspace_role") || "")) {
