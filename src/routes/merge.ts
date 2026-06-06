@@ -4,9 +4,9 @@
 
 import { Hono } from "hono";
 import type { Bindings, Variables } from "../index";
-import { authMiddleware, workspaceMiddleware } from "../lib/middleware";
 import { generateId, nowIso } from "../lib/auth";
 import type { JwtPayload } from "../lib/auth";
+import { authMiddleware, workspaceMiddleware } from "../lib/middleware";
 
 const merge = new Hono<{ Bindings: Bindings; Variables: Variables }>();
 merge.use("*", authMiddleware, workspaceMiddleware);
