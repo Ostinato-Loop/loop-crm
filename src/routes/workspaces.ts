@@ -3,9 +3,9 @@
 
 import { Hono } from "hono";
 import type { Bindings, Variables } from "../index";
-import { authMiddleware } from "../lib/middleware";
 import { generateId, nowIso } from "../lib/auth";
 import type { JwtPayload } from "../lib/auth";
+import { authMiddleware } from "../lib/middleware";
 
 const workspaces = new Hono<{ Bindings: Bindings; Variables: Variables }>();
 
