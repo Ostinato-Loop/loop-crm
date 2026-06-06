@@ -3,12 +3,13 @@
 
 import type { Context, Next } from "hono";
 import { verifyJwt } from "./auth";
+import type { JwtPayload } from "./auth";
 import type { Bindings, Variables } from "../index";
 
 export async function authMiddleware(
   c: Context<{ Bindings: Bindings; Variables: Variables }>,
   next: Next
-): Promise<Response | void> {
+): Promise<Response | undefined> {
   const authHeader = c.req.header("Authorization");
   if (!authHeader?.startsWith("Bearer ")) {
     return c.json({ error: "Missing or invalid authorization header" }, 401);
@@ -23,8 +24,8 @@ export async function authMiddleware(
 export async function workspaceMiddleware(
   c: Context<{ Bindings: Bindings; Variables: Variables }>,
   next: Next
-): Promise<Response | void> {
-  const user = c.get("user")!;
+): Promise<Response | undefined> {
+  const user = c.get("user") as JwtPayload;
   const workspaceId = c.req.header("X-Workspace-ID") || c.req.query("workspace_id");
   if (!workspaceId) return c.json({ error: "X-Workspace-ID header or workspace_id query param required" }, 400);
 
@@ -48,7 +49,7 @@ export async function requireRole(
   roles: string[],
   c: Context<{ Bindings: Bindings; Variables: Variables }>,
   next: Next
-): Promise<Response | void> {
+): Promise<Response | undefined> {
   const role = c.get("workspace_role");
   if (!role || !roles.includes(role)) return c.json({ error: "Insufficient workspace permissions" }, 403);
   await next();
