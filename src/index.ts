@@ -2,16 +2,16 @@
 // Deployed at: crm.rald.cloud | Version: 1.0.0
 // LILCKY STUDIO LIMITED
 
+import { type SupabaseClient, createClient } from "@supabase/supabase-js";
 import { Hono } from "hono";
 import { cors } from "hono/cors";
-import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import type { JwtPayload } from "./lib/auth";
+import channelRoutes from "./routes/channels";
+import customerRoutes from "./routes/customers";
+import mergeRoutes from "./routes/merge";
+import segmentRoutes from "./routes/segments";
+import timelineRoutes from "./routes/timeline";
 import workspaceRoutes from "./routes/workspaces";
-import customerRoutes  from "./routes/customers";
-import channelRoutes   from "./routes/channels";
-import segmentRoutes   from "./routes/segments";
-import timelineRoutes  from "./routes/timeline";
-import mergeRoutes     from "./routes/merge";
 
 export type Bindings = {
   SUPABASE_URL: string;
