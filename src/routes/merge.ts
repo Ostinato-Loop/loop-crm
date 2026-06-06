@@ -6,6 +6,7 @@ import { Hono } from "hono";
 import type { Bindings, Variables } from "../index";
 import { authMiddleware, workspaceMiddleware } from "../lib/middleware";
 import { generateId, nowIso } from "../lib/auth";
+import type { JwtPayload } from "../lib/auth";
 
 const merge = new Hono<{ Bindings: Bindings; Variables: Variables }>();
 merge.use("*", authMiddleware, workspaceMiddleware);
@@ -13,8 +14,8 @@ merge.use("*", authMiddleware, workspaceMiddleware);
 // Merge two customers — primary survives, secondary is absorbed
 merge.post("/", async (c) => {
   const db = c.get("db");
-  const workspaceId = c.get("workspace_id")!;
-  const user = c.get("user")!;
+  const workspaceId = c.get("workspace_id") as string;
+  const user = c.get("user") as JwtPayload;
 
   if (!["owner", "admin"].includes(c.get("workspace_role") || "")) {
     return c.json({ error: "Only owners and admins can merge customers" }, 403);
@@ -133,8 +134,8 @@ merge.post("/", async (c) => {
 // Rollback a merge
 merge.post("/rollback/:merge_log_id", async (c) => {
   const db = c.get("db");
-  const workspaceId = c.get("workspace_id")!;
-  const user = c.get("user")!;
+  const workspaceId = c.get("workspace_id") as string;
+  const user = c.get("user") as JwtPayload;
   const mergeLogId = c.req.param("merge_log_id");
 
   if (!["owner", "admin"].includes(c.get("workspace_role") || "")) {
@@ -204,8 +205,8 @@ merge.post("/rollback/:merge_log_id", async (c) => {
 // Get merge history
 merge.get("/history", async (c) => {
   const db = c.get("db");
-  const workspaceId = c.get("workspace_id")!;
-  const limit = Math.min(parseInt(c.req.query("limit") || "20"), 100);
+  const workspaceId = c.get("workspace_id") as string;
+  const limit = Math.min(Number.parseInt(c.req.query("limit") || "20"), 100);
 
   const { data: logs } = await db.from("crm_customer_merge_log")
     .select("*").eq("workspace_id", workspaceId)
