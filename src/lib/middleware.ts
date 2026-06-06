@@ -50,6 +50,6 @@ export async function requireRole(
   next: Next
 ): Promise<Response | void> {
   const role = c.get("workspace_role");
-  if (!roles.includes(role)) return c.json({ error: "Insufficient workspace permissions" }, 403);
+  if (!role || !roles.includes(role)) return c.json({ error: "Insufficient workspace permissions" }, 403);
   await next();
 }
