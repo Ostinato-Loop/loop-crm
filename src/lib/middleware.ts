@@ -2,9 +2,9 @@
 // LILCKY STUDIO LIMITED
 
 import type { Context, Next } from "hono";
+import type { Bindings, Variables } from "../index";
 import { verifyJwt } from "./auth";
 import type { JwtPayload } from "./auth";
-import type { Bindings, Variables } from "../index";
 
 export async function authMiddleware(
   c: Context<{ Bindings: Bindings; Variables: Variables }>,
