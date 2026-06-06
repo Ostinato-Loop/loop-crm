@@ -5,12 +5,13 @@ import { Hono } from "hono";
 import type { Bindings, Variables } from "../index";
 import { authMiddleware } from "../lib/middleware";
 import { generateId, nowIso } from "../lib/auth";
+import type { JwtPayload } from "../lib/auth";
 
 const workspaces = new Hono<{ Bindings: Bindings; Variables: Variables }>();
 
 // Create workspace
 workspaces.post("/", authMiddleware, async (c) => {
-  const user = c.get("user")!;
+  const user = c.get("user") as JwtPayload;
   const body = await c.req.json().catch(() => null) as { name?: string; slug?: string } | null;
   if (!body?.name) return c.json({ error: "name is required" }, 400);
 
@@ -63,7 +64,7 @@ workspaces.post("/", authMiddleware, async (c) => {
 
 // Get current workspace
 workspaces.get("/:id", authMiddleware, async (c) => {
-  const user = c.get("user")!;
+  const user = c.get("user") as JwtPayload;
   const workspaceId = c.req.param("id");
   const db = c.get("db");
 
@@ -88,7 +89,7 @@ workspaces.get("/:id", authMiddleware, async (c) => {
 
 // List user's workspaces
 workspaces.get("/", authMiddleware, async (c) => {
-  const user = c.get("user")!;
+  const user = c.get("user") as JwtPayload;
   const db = c.get("db");
 
   const { data: memberships } = await db
@@ -106,7 +107,7 @@ workspaces.get("/", authMiddleware, async (c) => {
 
 // Invite member
 workspaces.post("/:id/members", authMiddleware, async (c) => {
-  const user = c.get("user")!;
+  const user = c.get("user") as JwtPayload;
   const workspaceId = c.req.param("id");
   const db = c.get("db");
   const body = await c.req.json().catch(() => null) as { user_id?: string; role?: string } | null;
@@ -154,7 +155,7 @@ workspaces.post("/:id/members", authMiddleware, async (c) => {
 
 // List workspace members
 workspaces.get("/:id/members", authMiddleware, async (c) => {
-  const user = c.get("user")!;
+  const user = c.get("user") as JwtPayload;
   const workspaceId = c.req.param("id");
   const db = c.get("db");
 
